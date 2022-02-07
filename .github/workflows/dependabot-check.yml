@@ -1,0 +1,18 @@
+---
+name: Validate Dockerfile for Dependabot use
+# From: https://github.com/jace-ys/mobydick-action
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**/Dockerfile'
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - name: Mobydick Validation
+        uses: jace-ys/mobydick-action@v0.1.0

@@ -1,0 +1,19 @@
+---
+name: Label Pull Request
+# From: https://github.com/TimonVS/pr-labeler-action
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened]
+jobs:
+  label:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: TimonVS/pr-labeler-action@v3.1.0
+        with:
+          configuration-path: .github/label_pr_config.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: kentaro-m/auto-assign-action@v1.2.1
