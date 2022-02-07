@@ -1,0 +1,224 @@
+---
+name: Release Ship
+# From: https://github.com/actions-ecosystem/action-bump-semver
+# From: https://github.com/docker/build-push-action
+# From: https://github.com/softprops/action-gh-release
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '**/*.md'
+    branches: [main]
+env:
+  APP: wireguard-pia
+  USER: ${{ github.repository_owner }}
+  EMAIL: ${{ github.repository_owner }}@users.noreply.github.com
+  PLATFORM: linux/amd64,linux/arm64,linux/arm/v7,linux/i386
+jobs:
+  semver-build-push-release:
+    runs-on: ubuntu-20.04
+    outputs:
+      new_version: ${{ steps.bump-semver.outputs.new_version }}
+      pr_level: ${{ steps.release-label.outputs.level }}
+    steps:
+      - uses: actions/checkout@v2.4.0
+
+      - uses: actions-ecosystem/action-get-merged-pull-request@v1
+        id: get-merged-pull-request
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions-ecosystem/action-release-label@v1
+        id: release-label
+        if: ${{ steps.get-merged-pull-request.outputs.title != null }}
+        with:
+          labels: ${{ steps.get-merged-pull-request.outputs.labels }}
+
+      - uses: actions-ecosystem/action-get-latest-tag@v1.4.1
+        id: get-latest-tag
+        if: ${{ steps.release-label.outputs.level != null }}
+        with:
+          semver_only: true
+
+      - uses: actions-ecosystem/action-bump-semver@v1
+        id: bump-semver
+        if: ${{ steps.release-label.outputs.level != null }}
+        with:
+          current_version: ${{ steps.get-latest-tag.outputs.tag }}
+          level: ${{ steps.release-label.outputs.level }}
+
+      - name: Check pr_Level and new_version
+        run: |
+          echo pr_level is: ${{ steps.release-label.outputs.level }}
+          echo new_version is: ${{ steps.bump-semver.outputs.new_version }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1.12.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1.12.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Extract major and minor version from semver
+        # Snippet from: https://github.com/actions/toolkit/blob/master/docs/commands.md#set-an-environment-variable
+        id: maj-min-version
+        shell: bash
+        run: |
+          TAG_MAJ=$(echo ${{ steps.bump-semver.outputs.new_version }} | cut -f 1 -d '.')
+          TAG_MIN=$(echo ${{ steps.bump-semver.outputs.new_version }} | cut -f 1,2 -d '.')
+          echo "::set-output name=tag_maj::$TAG_MAJ"
+          echo "::set-output name=tag_min::$TAG_MIN"
+
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date -u --rfc-3339=seconds | sed 's/ /T/')"
+
+      - name: Build and push multiarch
+        uses: docker/build-push-action@v2
+        if: ${{ steps.bump-semver.outputs.new_version }}
+        with:
+          context: .
+          platforms: ${{ env.PLATFORM }}
+          push: true
+          labels: |
+            org.label-schema.name = ${{ env.APP }}
+            org.label-schema.description = ${{ github.event.repository.description }}
+            org.label-schema.build-date=${{ steps.date.outputs.date }}
+            org.label-schema.vendor = ${{ env.USER }} <${{ env.EMAIL }}>
+            org.label-schema.version = ${{ steps.bump-semver.outputs.new_version }}
+            org.label-schema.vcs-ref = ${{ github.sha }}
+            org.label-schema.vcs-url = https://github.com/${{ github.repository }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}:${{ steps.bump-semver.outputs.new_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}:${{ steps.maj-min-version.outputs.tag_maj }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}:${{ steps.maj-min-version.outputs.tag_min }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.APP }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ env.APP }}:${{ steps.bump-semver.outputs.new_version }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.APP }}:${{ steps.maj-min-version.outputs.tag_maj }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.APP }}:${{ steps.maj-min-version.outputs.tag_min }}
+
+      - name: Build amd64
+        uses: docker/build-push-action@v2
+        if: ${{ steps.bump-semver.outputs.new_version }}
+        with:
+          context: .
+          platforms: linux/amd64
+          outputs: type=docker,dest=/tmp/${{ env.APP }}-amd64-${{ steps.maj-min-version.outputs.tag_min }}-image.tar
+          labels: |
+            org.label-schema.name = ${{ env.APP }}
+            org.label-schema.description = ${{ github.event.repository.description }}
+            org.label-schema.build-date=${{ steps.date.outputs.date }}
+            org.label-schema.vendor = ${{ env.USER }} <${{ env.EMAIL }}>
+            org.label-schema.version = ${{ steps.bump-semver.outputs.new_version }}
+            org.label-schema.vcs-ref = ${{ github.sha }}
+            org.label-schema.vcs-url = https://github.com/${{ github.repository }}
+
+      - name: Build arm64
+        uses: docker/build-push-action@v2
+        if: ${{ steps.bump-semver.outputs.new_version }}
+        with:
+          context: .
+          platforms: linux/arm64
+          outputs: type=docker,dest=/tmp/${{ env.APP }}-arm64-${{ steps.maj-min-version.outputs.tag_min }}-image.tar
+          labels: |
+            org.label-schema.name = ${{ env.APP }}
+            org.label-schema.description = ${{ github.event.repository.description }}
+            org.label-schema.build-date=${{ steps.date.outputs.date }}
+            org.label-schema.vendor = ${{ env.USER }} <${{ env.EMAIL }}>
+            org.label-schema.version = ${{ steps.bump-semver.outputs.new_version }}
+            org.label-schema.vcs-ref = ${{ github.sha }}
+            org.label-schema.vcs-url = https://github.com/${{ github.repository }}
+
+      - name: Build armv7
+        uses: docker/build-push-action@v2
+        if: ${{ steps.bump-semver.outputs.new_version }}
+        with:
+          context: .
+          platforms: linux/arm/v7
+          outputs: type=docker,dest=/tmp/${{ env.APP }}-armv7-${{ steps.maj-min-version.outputs.tag_min }}-image.tar
+          labels: |
+            org.label-schema.name = ${{ env.APP }}
+            org.label-schema.description = ${{ github.event.repository.description }}
+            org.label-schema.build-date=${{ steps.date.outputs.date }}
+            org.label-schema.vendor = ${{ env.USER }} <${{ env.EMAIL }}>
+            org.label-schema.version = ${{ steps.bump-semver.outputs.new_version }}
+            org.label-schema.vcs-ref = ${{ github.sha }}
+            org.label-schema.vcs-url = https://github.com/${{ github.repository }}
+
+      - name: Build i386
+        uses: docker/build-push-action@v2
+        if: ${{ steps.bump-semver.outputs.new_version }}
+        with:
+          context: .
+          platforms: linux/i386
+          outputs: type=docker,dest=/tmp/${{ env.APP }}-armv7-${{ steps.maj-min-version.outputs.tag_min }}-image.tar
+          labels: |
+            org.label-schema.name = ${{ env.APP }}
+            org.label-schema.description = ${{ github.event.repository.description }}
+            org.label-schema.build-date=${{ steps.date.outputs.date }}
+            org.label-schema.vendor = ${{ env.USER }} <${{ env.EMAIL }}>
+            org.label-schema.version = ${{ steps.bump-semver.outputs.new_version }}
+            org.label-schema.vcs-ref = ${{ github.sha }}
+            org.label-schema.vcs-url = https://github.com/${{ github.repository }}
+
+      - name: Compress docker archive
+        run: |
+          mkdir /tmp/compress
+          cd /tmp
+          for i in $(ls ${{ env.APP }}*.tar); do
+            tar cvaf $i.gz $i
+          done
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.APP }}-docker-images
+          path: /tmp/${{ env.APP }}*.tar.gz
+          if-no-files-found: error
+
+      - uses: actions-ecosystem/action-regex-match@v2
+        id: regex-match
+        if: ${{ steps.bump-semver.outputs.new_version }}
+        with:
+          text: ${{ steps.get-merged-pull-request.outputs.body }}
+          regex: '```release_note([\s\S]*)```'
+
+      - uses: actions-ecosystem/action-push-tag@v1
+        if: ${{ steps.bump-semver.outputs.new_version }}
+        with:
+          tag: ${{ steps.bump-semver.outputs.new_version }}
+          message: "${{ steps.bump-semver.outputs.new_version }}: PR #${{ steps.get-merged-pull-request.outputs.number }} ${{ steps.get-merged-pull-request.outputs.title }}"
+
+      - uses: softprops/action-gh-release@v1
+        if: ${{ steps.release-label.outputs.level == 'major' || steps.release-label.outputs.level == 'minor' }}
+        with:
+          tag_name: ${{ steps.bump-semver.outputs.new_version }}
+          name: ${{ steps.bump-semver.outputs.new_version }}
+          # token: ${{ secrets.GITHUB_TOKEN }}
+          body: ${{ steps.regex-match.outputs.group1 }}
+          # body_path: ${{ github.workspace }}-CHANGELOG.txt
+          fail_on_unmatched_files: true
+          files: |
+            /tmp/${{ env.APP }}*.tar.gz
+
+      - uses: actions-ecosystem/action-create-comment@v1
+        if: ${{ steps.bump-semver.outputs.new_version != null }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.get-merged-pull-request.outputs.number }}
+          body: |
+            The new version [${{ steps.bump-semver.outputs.new_version }}](https://github.com/${{ github.repository }}/releases/tag/${{ steps.bump-semver.outputs.new_version }}) has been released :tada:

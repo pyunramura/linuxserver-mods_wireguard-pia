@@ -1,0 +1,23 @@
+---
+name: Update Dockerhub Description
+# From: https://github.com/peter-evans/dockerhub-description
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '/README.md'
+    branches: [main]
+env:
+  APP: wireguard-pia
+jobs:
+  update:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}
+          short-description: ${{ github.event.repository.description }}
