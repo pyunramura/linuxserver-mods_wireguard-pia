@@ -1,0 +1,29 @@
+---
+name: Validate Yaml
+# From: https://github.com/ibiqlik/action-yamllint
+
+on:
+  pull_request:
+    paths:
+      - '**/*.yml'
+      - '**/*.yaml'
+# push:
+#   branches: [ main ]
+#   paths:
+#     - '.github/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2.4.0
+        # with:
+        #   ref: ${{ github.head_ref }}
+        #   fetch-depth: 0
+
+      - name: Lint Yaml
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: "."
+          config_file: "./.github/yamllint_config.yaml"
