@@ -9,6 +9,10 @@ on:
   push:
     paths-ignore:
       - '**/*.md'
+      - '.github/*'
+      - '.dockerignore'
+      - '.gitattributes'
+      - 'LICENSE'
     branches: [main]
 env:
   APP: wireguard-pia
@@ -165,7 +169,7 @@ jobs:
         with:
           context: .
           platforms: linux/i386
-          outputs: type=docker,dest=/tmp/${{ env.APP }}-armv7-${{ steps.maj-min-version.outputs.tag_min }}-image.tar
+          outputs: type=docker,dest=/tmp/${{ env.APP }}-i386-${{ steps.maj-min-version.outputs.tag_min }}-image.tar
           labels: |
             org.label-schema.name = ${{ env.APP }}
             org.label-schema.description = ${{ github.event.repository.description }}
