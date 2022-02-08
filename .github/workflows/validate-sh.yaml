@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
       - '**/*.sh'
-      - '**/run'
+      - '**/services.d/*'
       - '**/cont-init.d/*'
 jobs:
   validate:
@@ -21,5 +21,8 @@ jobs:
       - name: Lint Shell Script
         uses: reviewdog/action-shellcheck@v1.13
         with:
-          pattern: "run"
+          pattern: |
+            run
+            *.sh
+            90-install-wireguard
           level: "warning"
