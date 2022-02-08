@@ -21,3 +21,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}
           short-description: ${{ github.event.repository.description }}
+          readme-filepath: ./README.md
