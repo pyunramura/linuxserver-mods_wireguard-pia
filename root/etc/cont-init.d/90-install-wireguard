@@ -10,20 +10,20 @@ LOC
 )
 
 for i in "${VARS[@]}"; do
-  if [ -z ${!i+x} ]; then
-    if [[ "$i" == WG_USER ]] && [ -z ${WG_USER_FILE+x} ]; then
-        echo "[cont-init.d] ${i} or WG_USER_FILE is required and is not set. Will not continue"
-        exit 0
-    elif [[ "$i" == WG_PASS ]]  && [ -z ${WG_PASS_FILE+x} ]; then
-        echo "[cont-init.d] ${i} or WG_PASS_FILE is required and is not set. Will not continue"
-        exit 0
-    elif [[ "$i" == LOC ]]; then
-        if [ -z ${PIA_CN+x} ] || [ -z ${PIA_IP+x} ] || [ -z ${PIA_PORT+x} ]; then
-            echo "[cont-init.d] ${i} or PIA_CN & PIA_IP & PIA_PORT is required and is not set. Will not continue"
+    if [ -z ${!i+x} ]; then
+        if [[ "$i" == WG_USER ]] && [ -z ${WG_USER_FILE+x} ]; then
+            echo "[cont-init.d] ${i} or WG_USER_FILE is required and is not set. Will not continue"
             exit 0
+        elif [[ "$i" == WG_PASS ]]  && [ -z ${WG_PASS_FILE+x} ]; then
+            echo "[cont-init.d] ${i} or WG_PASS_FILE is required and is not set. Will not continue"
+            exit 0
+        elif [[ "$i" == LOC ]]; then
+            if [ -z ${PIA_CN+x} ] || [ -z ${PIA_IP+x} ] || [ -z ${PIA_PORT+x} ]; then
+                echo "[cont-init.d] ${i} or PIA_CN & PIA_IP & PIA_PORT is required and is not set. Will not continue"
+                exit 0
         fi
     fi
-  fi
+fi
 done
 
 apk add --no-cache \
@@ -46,7 +46,7 @@ fi
 # To avoid confusion, also suppress the error message that displays even when pre-set to 1 on container creation
 sed -i 's/cmd sysctl.*/set +e \&\& sysctl -q net.ipv4.conf.all.src_valid_mark=1 \&> \/dev\/null \&\& set -e/' /usr/bin/wg-quick
 
-# Get the PIA CA cert
+# Get the PIA CA cert (is copied to /config/wireguard)
 curl -fsSL "https://raw.githubusercontent.com/pia-foss/desktop/master/daemon/res/ca/rsa_4096.crt" > /defaults/wireguard/rsa_4096.crt
 
 # Create default dirs in /config/wireguard
