@@ -52,3 +52,10 @@ jobs:
           context: .
           platforms: linux/arm/v7
           push: false
+
+      - name: Build i386
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          platforms: linux/i386
+          push: false
