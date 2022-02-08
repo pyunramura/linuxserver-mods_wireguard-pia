@@ -14,6 +14,7 @@ jobs:
   update:
     runs-on: ubuntu-20.04
     steps:
+      - uses: actions/checkout@v2.4.0
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v2
         with:
@@ -21,4 +22,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}
           short-description: ${{ github.event.repository.description }}
-          readme-filepath: README.md
+          readme-filepath: ./README.md
