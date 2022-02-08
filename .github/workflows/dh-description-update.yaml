@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '/README.md'
+      - '*.md'
     branches: [main]
 env:
   APP: wireguard-pia
@@ -21,4 +21,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.APP }}
           short-description: ${{ github.event.repository.description }}
-          readme-filepath: ./README.md
+          readme-filepath: README.md
