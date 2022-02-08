@@ -11,6 +11,8 @@ or in the Dockerhub registry at [pyunramura/wireguard-pia](https://hub.docker.co
 
 ---
 
+## Usage
+
 This container-mod is packaged for installation within linuxserver containers by defining:
 
 `-e DOCKER_MODS=pyunramura/wireguard-pia`  or
@@ -19,7 +21,11 @@ This container-mod is packaged for installation within linuxserver containers by
 
 in the container's configuration.
 
+## Constraints
+
 This mod was built for the [**linuxserver/transmission**](https://fleet.linuxserver.io/image?name=linuxserver/transmission) image, but should be usable with any linuxserver image that would benefit from a wireguard VPN tunnel.
+
+## Mod Info
 
 The mod was cribbed almost entirely from [**thrnz/docker-wireguard-pia**](https://github.com/thrnz/docker-wireguard-pia), with minor repackaging to allow integration into an existing linuxserver container.
 
