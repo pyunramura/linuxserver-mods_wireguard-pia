@@ -86,9 +86,9 @@ _finish () {
     # Remove forwarded port number dump file if requested
     [[ $PORT_FILE_CLEANUP == true ]] && [ -w "$portfile" ] && rm "$portfile"
     if [[ $WG_USERSPACE == true ]]; then
-    WG_QUICK_USERSPACE_IMPLEMENTATION=wireguard-go wg-quick down wg0
+        WG_QUICK_USERSPACE_IMPLEMENTATION=wireguard-go wg-quick down wg0
     else
-    wg-quick down wg0
+        wg-quick down wg0
     fi
     [ -x "$post_down" ] && run_script "$post_down"
     exit 0
@@ -124,7 +124,7 @@ get_auth_token () {
     [ -z "$WG_USER" ] && echo "$(date): PIA username not set. Unable to retrieve new auth token." && fatal_error
     echo "$(date): Generating auth token"
     if ! $scriptdir/pia-auth.sh -u "$WG_USER" -p "$WG_PASS" > "$tokenfile"; then
-    echo "$(date): Failed to acquire new auth token" && fatal_error
+        echo "$(date): Failed to acquire new auth token" && fatal_error
     fi
     chmod 600 "$tokenfile"
 }
@@ -239,9 +239,9 @@ if [[ $PORT_FORWARDING == true ]] && [ -n "$pf_api_ip" ]; then
     echo "$(date): Starting port forward script"
     # Try to use a persistent port if requested
     if [[ $PORT_PERSIST == true ]]; then
-    $scriptdir/pf.sh -t "$tokenfile" -i "$pf_api_ip" -n "$pf_cn" -p "$portfile" -c "$pia_cacrt" -s "$scriptdir/pf_success.sh" -r "$pf_persistfile" -f wg0 &
+        $scriptdir/pf.sh -t "$tokenfile" -i "$pf_api_ip" -n "$pf_cn" -p "$portfile" -c "$pia_cacrt" -s "$scriptdir/pf_success.sh" -r "$pf_persistfile" -f wg0 &
     else
-    $scriptdir/pf.sh -t "$tokenfile" -i "$pf_api_ip" -n "$pf_cn" -p "$portfile" -c "$pia_cacrt" -s "$scriptdir/pf_success.sh" -f wg0 &
+        $scriptdir/pf.sh -t "$tokenfile" -i "$pf_api_ip" -n "$pf_cn" -p "$portfile" -c "$pia_cacrt" -s "$scriptdir/pf_success.sh" -f wg0 &
     fi
 fi
 
