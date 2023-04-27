@@ -30,6 +30,7 @@ apk add --no-cache \
     wireguard-tools \
     ca-certificates \
     iptables \
+    openssl \
     ip6tables
 
 # Sanitize inputs
