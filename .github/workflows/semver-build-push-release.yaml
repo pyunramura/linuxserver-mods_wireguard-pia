@@ -46,7 +46,7 @@ jobs:
         if: ${{ steps.release-label.outputs.level != null }}
         continue-on-error: true
         with:
-          repository: "${{ env.USER }}/${{ env.APP }}"
+          repository: "${{ github.repository_owner }}/${{ github.event.repository.name }}"
 
       - uses: actions-ecosystem/action-bump-semver@v1
         id: bump-semver
