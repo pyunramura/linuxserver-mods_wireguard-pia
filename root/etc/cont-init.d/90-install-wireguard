@@ -31,7 +31,6 @@ apk add --no-cache \
     ca-certificates \
     iptables \
     openssl \
-    curl \
     ip6tables
 
 # Sanitize inputs
