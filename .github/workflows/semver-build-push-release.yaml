@@ -35,6 +35,9 @@ jobs:
         if: ${{ steps.get-merged-pull-request.outputs.title != null }}
         with:
           labels: ${{ steps.get-merged-pull-request.outputs.labels }}
+      - name: set /github/workspace safe directory
+        run: |
+          git config --global --add safe.directory /github/workspace
 
       - uses: actions-ecosystem/action-get-latest-tag@v1.4.1
         id: get-latest-tag
