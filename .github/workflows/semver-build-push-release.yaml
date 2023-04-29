@@ -35,15 +35,18 @@ jobs:
         if: ${{ steps.get-merged-pull-request.outputs.title != null }}
         with:
           labels: ${{ steps.get-merged-pull-request.outputs.labels }}
-      - name: set /github/workspace safe directory
-        run: |
-          git config --global safe.directory '*'
 
-      - uses: actions-ecosystem/action-get-latest-tag@v1.4.1
+      # - uses: actions-ecosystem/action-get-latest-tag@v1.4.1
+      #   id: get-latest-tag
+      #   if: ${{ steps.release-label.outputs.level != null }}
+      #   with:
+      #     semver_only: true
+      - uses: oprypin/find-latest-tag@v1
         id: get-latest-tag
         if: ${{ steps.release-label.outputs.level != null }}
+        continue-on-error: true
         with:
-          semver_only: true
+          repository: "${{ env.USER }}/${{ env.APP }}"
 
       - uses: actions-ecosystem/action-bump-semver@v1
         id: bump-semver
